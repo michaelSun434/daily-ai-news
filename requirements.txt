@@ -1,4 +1,5 @@
-feedparser
-openai
-pip install openai==0.28
+requests>=2.31.0
+beautifulsoup4>=4.12.2
+openai==0.28
+
 
