@@ -58,41 +58,44 @@ def summarize_news(news_items):
         })
     return summaries
 
-# ===== 3. 邮件发送 =====
-def send_email(content):
-    msg = MIMEText(content, 'html', 'utf-8')
-    msg['Subject'] = f"每日AI新闻 - {datetime.date.today()}"
-    msg['From'] = EMAIL_USER
-    msg['To'] = EMAIL_TO
+# 保存 HTML 到一个文件
+def save_html(content):
+    save_path = "index.html"  # GitHub Pages 默认主页
+    with open(save_path, "w", encoding="utf-8") as f:
+        f.write(content)
+    print(f"✅ 网页已更新: {save_path}")
 
-    server = smtplib.SMTP_SSL('smtp.gmail.com', 465)  # 如果用Gmail
-    server.login(EMAIL_USER, EMAIL_PASS)
-    server.sendmail(EMAIL_USER, [EMAIL_TO], msg.as_string())
-    server.quit()
-
-# ===== 4. 企业微信推送（可选） =====
-def send_wechat(text):
-    if not WECHAT_WEBHOOK:
-        return
-    payload = {"msgtype": "text", "text": {"content": text}}
-    requests.post(WECHAT_WEBHOOK, json=payload)
-
-# ===== 主流程 =====
+# 主函数最后改成这样：
 if __name__ == "__main__":
     news = fetch_news()
     summaries = summarize_news(news)
 
-    html_content = "<h2>今日AI新闻</h2>"
-    wechat_text = "【今日AI新闻】\n"
+    html_content = """<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>每日AI新闻</title>
+<style>
+body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; }
+h2 { color: #333; text-align: center; }
+.news { margin-bottom: 20px;}
+.news-title { font-weight: bold; font-size: 18px; }
+.news-summary { margin: 5px 0; }
+</style>
+</head>
+<body>
+<h2>每日AI新闻</h2>
+"""
 
     for s in summaries:
-        html_content += f"<p><b>{s['title']}</b><br>{s['summary']}<br><a href='{s['link']}'>阅读原文</a></p>"
-        wechat_text += f"{s['title']}\n{s['summary']}\n{s['link']}\n\n"
+        html_content += f"""
+<div class="news">
+    <div class="news-title">{s['title']}</div>
+    <div class="news-summary">{s['summary']}</div>
+    <a href="{s['link']}" target="_blank">阅读原文</a>
+</div>
+"""
 
-    # 发邮件
-    if EMAIL_USER and EMAIL_PASS and EMAIL_TO:
-        send_email(html_content)
-    # 发企业微信
-    send_wechat(wechat_text)
+    html_content += "</body></html>"
 
-    print("✅ 今日AI新闻已发送")
+    save_html(html_content)
